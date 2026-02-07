@@ -102,9 +102,12 @@ dbt --quiet run-operation generate_source \
     "name": "staging",
     "schema_name": "karun",
     "database_name": "dataexpert_student",
-    "table_names": ["stg_bootcamp__raw_customers", "stg_bootcamp__raw_haunted_houses"],
-    "generate_columns": true, "include_data_types": true,
-    "include_database": true, "include_schema": true
+    "table_names": ["stg_bootcamp__raw_customers", "stg_bootcamp__raw_haunted_houses", "stg_bootcamp__raw_haunted_house_tickets", "stg_bootcamp__raw_customer_feedbacks"],
+    "generate_columns": true,
+    "include_descriptions": true,
+    "include_data_types": true,
+    "include_database": true,
+    "include_schema": true
   }' > models/marts/_staging_source.yml
 ```
 
