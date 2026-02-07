@@ -20,7 +20,7 @@ models/
     fct_visits.sql / .yml                         # fact: tickets joined with feedbacks
 ```
 
-Everything under `staging/` was generated with `dbt run-operation` — no manual SQL. Marts were written on top of staging to complete the lineage, then their YAML was also generated via codegen.
+Everything was scaffolded with codegen — staging models directly, and marts by temporarily defining staging views as a source for codegen to introspect, then swapping `source()` to `ref()`. The only hand-written part is join logic in fact models.
 
 ## Prerequisites
 
@@ -92,14 +92,38 @@ dbt --quiet run-operation generate_model_yaml \
   > models/staging/stg_bootcamp__raw_customers.yml
 ```
 
-### Step 5: Build marts (dim/fct)
+### Step 5: Generate marts (dim/fct) using codegen
 
-Write dimensional models in `models/marts/` referencing the staging layer. Marts complete the lineage — they're where business logic lives:
-
-- **dim_** models wrap a single entity (customers, haunted houses)
-- **fct_** models join staging tables to represent events (visits = tickets + feedbacks)
+Since `generate_base_model` only works with `source()`, temporarily define the staging views as a source:
 
 ```bash
+dbt --quiet run-operation generate_source \
+  --args '{
+    "name": "staging",
+    "schema_name": "karun",
+    "database_name": "dataexpert_student",
+    "table_names": ["stg_bootcamp__raw_customers", "stg_bootcamp__raw_haunted_houses"],
+    "generate_columns": true, "include_data_types": true,
+    "include_database": true, "include_schema": true
+  }' > models/marts/_staging_source.yml
+```
+
+Then generate base models from it:
+
+```bash
+dbt --quiet run-operation generate_base_model \
+  --args '{"source_name": "staging", "table_name": "stg_bootcamp__raw_customers", "leading_commas": true}' \
+  > models/marts/dim_customers.sql
+```
+
+After generating, make two edits:
+1. Replace `{{ source('staging', '...') }}` with `{{ ref('...') }}` in each file
+2. For fact models, add CTEs and joins for additional staging tables (codegen provides the column lists, you add the join logic)
+
+Then delete the temporary source and run:
+
+```bash
+rm models/marts/_staging_source.yml
 dbt run --select marts
 ```
 

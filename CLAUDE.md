@@ -77,18 +77,57 @@ dbt --quiet run-operation generate_model_yaml \
 
 Run this for **every staging model**.
 
-### 5. Build marts models (dim/fct)
+### 5. Generate marts models (dim/fct) using codegen
 
-Marts complete the lineage and are a required part of the pipeline. Write dimensional models in `models/marts/` referencing staging via `{{ ref('stg_...') }}`.
+Marts complete the lineage and are a required part of the pipeline. Use codegen to scaffold them too.
 
-Guidelines for marts:
-- **dim_** models: one per entity (customers, haunted_houses, etc.) — select columns from a single staging model
-- **fct_** models: represent events/transactions — join multiple staging models to build the fact (e.g., tickets joined with feedbacks)
-- Use CTEs for each staging ref, then join/select in the final query
-- Leading commas, same as staging
+**5a. Create a temporary staging source.** Since `generate_base_model` only works with sources, temporarily define the staging views as a source so codegen can introspect their columns:
 
-After writing the SQL:
+```bash
+dbt --quiet run-operation generate_source \
+  --args '{
+    "name": "staging",
+    "schema_name": "<YOUR_SCHEMA>",
+    "database_name": "<DATABASE>",
+    "table_names": ["stg_<SOURCE_NAME>__<TABLE_1>", "stg_<SOURCE_NAME>__<TABLE_2>"],
+    "generate_columns": true,
+    "include_descriptions": true,
+    "include_data_types": true,
+    "include_database": true,
+    "include_schema": true
+  }' > models/marts/_staging_source.yml
+```
 
+**5b. Generate base models from the staging source:**
+
+```bash
+dbt --quiet run-operation generate_base_model \
+  --args '{
+    "source_name": "staging",
+    "table_name": "stg_<SOURCE_NAME>__<TABLE_NAME>",
+    "leading_commas": true
+  }' > models/marts/dim_<NAME>.sql
+```
+
+Run this for every dim and fct model.
+
+**5c. Swap `source()` to `ref()`.** In each generated mart file, replace:
+```
+{{ source('staging', 'stg_<SOURCE_NAME>__<TABLE_NAME>') }}
+```
+with:
+```
+{{ ref('stg_<SOURCE_NAME>__<TABLE_NAME>') }}
+```
+
+**5d. For fct models** that join multiple staging tables, add additional CTEs and a join. Codegen gives you the column list — you add the join logic.
+
+**5e. Delete the temporary source file:**
+```bash
+rm models/marts/_staging_source.yml
+```
+
+**5f. Run the marts:**
 ```bash
 dbt run --select marts
 ```
