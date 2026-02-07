@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_bootcamp__raw_customer_feedbacks
+    description: ""
+    columns:
+      - name: feedback_id
+        data_type: number
+        description: ""
+
+      - name: ticket_id
+        data_type: number
+        description: ""
+
+      - name: rating
+        data_type: number
+        description: ""
+
+      - name: comments
+        data_type: varchar
+        description: ""
+

@@ -1,0 +1,87 @@
+version: 2
+
+sources:
+  - name: bootcamp
+    description: ""
+    database: dataexpert_student
+    schema: bootcamp
+    tables:
+      - name: raw_customers
+        description: ""
+        columns:
+          - name: customer_id
+            data_type: number
+            description: ""
+          - name: age
+            data_type: number
+            description: ""
+          - name: gender
+            data_type: varchar
+            description: ""
+          - name: email
+            data_type: varchar
+            description: ""
+
+      - name: raw_customer_feedbacks
+        description: ""
+        columns:
+          - name: feedback_id
+            data_type: number
+            description: ""
+          - name: ticket_id
+            data_type: number
+            description: ""
+          - name: rating
+            data_type: number
+            description: ""
+          - name: comments
+            data_type: varchar
+            description: ""
+
+      - name: raw_haunted_houses
+        description: ""
+        columns:
+          - name: haunted_house_id
+            data_type: number
+            description: ""
+          - name: house_name
+            data_type: varchar
+            description: ""
+          - name: park_area
+            data_type: varchar
+            description: ""
+          - name: theme
+            data_type: varchar
+            description: ""
+          - name: fear_level
+            data_type: number
+            description: ""
+          - name: house_size
+            data_type: number
+            description: ""
+
+      - name: raw_haunted_house_tickets
+        description: ""
+        columns:
+          - name: ticket_id
+            data_type: number
+            description: ""
+          - name: customer_id
+            data_type: number
+            description: ""
+          - name: haunted_house_id
+            data_type: number
+            description: ""
+          - name: purchase_date
+            data_type: date
+            description: ""
+          - name: visit_date
+            data_type: date
+            description: ""
+          - name: ticket_type
+            data_type: varchar
+            description: ""
+          - name: ticket_price
+            data_type: float
+            description: ""
+

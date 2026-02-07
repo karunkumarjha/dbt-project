@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: stg_bootcamp__raw_haunted_house_tickets
+    description: ""
+    columns:
+      - name: ticket_id
+        data_type: number
+        description: ""
+
+      - name: customer_id
+        data_type: number
+        description: ""
+
+      - name: haunted_house_id
+        data_type: number
+        description: ""
+
+      - name: purchase_date
+        data_type: date
+        description: ""
+
+      - name: visit_date
+        data_type: date
+        description: ""
+
+      - name: ticket_type
+        data_type: varchar
+        description: ""
+
+      - name: ticket_price
+        data_type: float
+        description: ""
+

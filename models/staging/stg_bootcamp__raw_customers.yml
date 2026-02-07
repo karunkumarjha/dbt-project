@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_bootcamp__raw_customers
+    description: ""
+    columns:
+      - name: customer_id
+        data_type: number
+        description: ""
+
+      - name: age
+        data_type: number
+        description: ""
+
+      - name: gender
+        data_type: varchar
+        description: ""
+
+      - name: email
+        data_type: varchar
+        description: ""
+
