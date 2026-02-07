@@ -3,14 +3,14 @@ jaffle_shop:
   outputs:
     dev:
       type: snowflake
-      account: YOUR_ACCOUNT.YOUR_REGION
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
 
       user: "{{ env_var('SNOWFLAKE_USER')}}"
       password: "{{ env_var('SNOWFLAKE_PASSWORD')}}"
 
-      role: YOUR_ROLE
-      database: YOUR_DATABASE
-      warehouse: YOUR_WAREHOUSE
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
       schema: "{{ env_var('STUDENT_SCHEMA')}}"
       threads: 1
       client_session_keep_alive: False

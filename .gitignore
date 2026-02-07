@@ -1,5 +1,6 @@
 venv/
 .user.yml
+profiles.yml
 logs
 dbt_packages
 target

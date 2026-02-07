@@ -33,6 +33,7 @@ Everything was scaffolded with codegen — staging models directly, and marts by
 ```bash
 python3 -m venv venv && source venv/bin/activate
 pip install -r dbt-requirements.txt
+cp profiles.example.yml profiles.yml  # then fill in your env vars
 dbt deps
 dbt debug  # verify connection
 ```
@@ -100,8 +101,8 @@ Since `generate_base_model` only works with `source()`, temporarily define the s
 dbt --quiet run-operation generate_source \
   --args '{
     "name": "staging",
-    "schema_name": "karun",
-    "database_name": "dataexpert_student",
+    "schema_name": "<your_schema>",
+    "database_name": "<your_database>",
     "table_names": ["stg_bootcamp__raw_customers", "stg_bootcamp__raw_haunted_houses", "stg_bootcamp__raw_haunted_house_tickets", "stg_bootcamp__raw_customer_feedbacks"],
     "generate_columns": true,
     "include_descriptions": true,
