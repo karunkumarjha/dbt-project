@@ -7,7 +7,7 @@ This file gives Claude Code all the context it needs to scaffold a full dbt pipe
 - **dbt project name**: `dbt_portfolio`
 - **Profile**: `jaffle_shop` (defined in `profiles.yml`)
 - **Warehouse**: Snowflake
-- **Python venv**: `venv/` — always activate with `source venv/bin/activate` before running dbt commands
+- **Python venv**: `venv/` — activate once at the start of a session with `source venv/bin/activate`
 - **Packages**: codegen 0.12.1, dbt_utils 1.1.1, dbt_expectations 0.10.3 (see `packages.yml`)
 
 ## Conventions
@@ -18,16 +18,20 @@ This file gives Claude Code all the context it needs to scaffold a full dbt pipe
 - **Marts models**: `models/marts/dim_*.sql` or `models/marts/fct_*.sql`
 - **Marts YAML**: `models/marts/dim_*.yml` or `models/marts/fct_*.yml`
 - **Leading commas** in SQL select statements
-- **Materialization**: staging = `table`, marts = `table` (set in `dbt_project.yml`)
+- **Materialization**: staging = `view`, marts = `table` (set in `dbt_project.yml`)
 
 ## How to generate a full pipeline from a Snowflake source
 
-When the user asks to generate models from a source, follow these steps in order:
+When the user asks to generate models from a source, follow these steps in order. Activate the venv once at the start — no need to repeat it for every command.
+
+```bash
+source venv/bin/activate
+```
 
 ### 1. Generate sources YAML
 
 ```bash
-source venv/bin/activate && dbt --quiet run-operation generate_source \
+dbt --quiet run-operation generate_source \
   --args '{
     "name": "<SOURCE_NAME>",
     "schema_name": "<SCHEMA>",
@@ -44,11 +48,11 @@ source venv/bin/activate && dbt --quiet run-operation generate_source \
 ### 2. Generate staging SQL (one per table)
 
 ```bash
-source venv/bin/activate && dbt --quiet run-operation generate_base_model \
+dbt --quiet run-operation generate_base_model \
   --args '{
     "source_name": "<SOURCE_NAME>",
     "table_name": "<TABLE_NAME>",
-    "materialized": "table",
+    "materialized": "view",
     "leading_commas": true
   }' > models/staging/stg_<SOURCE_NAME>__<TABLE_NAME>.sql
 ```
@@ -58,34 +62,49 @@ Run this for **every table** in the source. Do them in parallel if possible.
 ### 3. Materialize staging models
 
 ```bash
-source venv/bin/activate && dbt run --select staging
+dbt run --select staging
 ```
 
-This must succeed before step 4 — codegen needs the materialized tables to generate YAML.
+This must succeed before step 4 — codegen needs the materialized views to generate YAML.
 
 ### 4. Generate staging YAML (one per model)
 
 ```bash
-source venv/bin/activate && dbt --quiet run-operation generate_model_yaml \
+dbt --quiet run-operation generate_model_yaml \
   --args '{"model_names": ["stg_<SOURCE_NAME>__<TABLE_NAME>"]}' \
   > models/staging/stg_<SOURCE_NAME>__<TABLE_NAME>.yml
 ```
 
 Run this for **every staging model**.
 
-### 5. (Optional) Build marts models
+### 5. Build marts models (dim/fct)
 
-If the user asks for dim/fct models, write them in `models/marts/` referencing staging via `{{ ref('stg_...') }}`. Then:
+Marts complete the lineage and are a required part of the pipeline. Write dimensional models in `models/marts/` referencing staging via `{{ ref('stg_...') }}`.
+
+Guidelines for marts:
+- **dim_** models: one per entity (customers, haunted_houses, etc.) — select columns from a single staging model
+- **fct_** models: represent events/transactions — join multiple staging models to build the fact (e.g., tickets joined with feedbacks)
+- Use CTEs for each staging ref, then join/select in the final query
+- Leading commas, same as staging
+
+After writing the SQL:
 
 ```bash
-source venv/bin/activate && dbt run --select marts
-source venv/bin/activate && dbt --quiet run-operation generate_model_yaml \
+dbt run --select marts
+```
+
+### 6. Generate marts YAML
+
+```bash
+dbt --quiet run-operation generate_model_yaml \
   --args '{"model_names": ["dim_<NAME>"]}' > models/marts/dim_<NAME>.yml
 ```
 
+Run this for **every mart model** (both dim and fct).
+
 ## Important notes
 
-- Always activate the venv before dbt commands: `source venv/bin/activate`
+- Activate the venv once per session — not before every command
 - Always use `dbt --quiet` when redirecting output to files (suppresses logs)
 - Run `dbt deps` if `dbt_packages/` is missing
 - Run `dbt debug` to verify the Snowflake connection before generating anything

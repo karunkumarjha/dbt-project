@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: dim_haunted_houses
+    description: ""
+    columns:
+      - name: haunted_house_id
+        data_type: number
+        description: ""
+
+      - name: house_name
+        data_type: varchar
+        description: ""
+
+      - name: park_area
+        data_type: varchar
+        description: ""
+
+      - name: theme
+        data_type: varchar
+        description: ""
+
+      - name: fear_level
+        data_type: number
+        description: ""
+
+      - name: house_size
+        data_type: number
+        description: ""
+

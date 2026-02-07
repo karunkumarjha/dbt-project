@@ -10,15 +10,17 @@ The idea is simple: point codegen at your Snowflake tables, let it generate the 
 models/
   staging/
     _sources.yml                                  # generated source definitions
-    stg_bootcamp__raw_customers.sql / .yml        # generated staging models + schema
+    stg_bootcamp__raw_customers.sql / .yml        # generated staging views + schema
     stg_bootcamp__raw_customer_feedbacks.sql / .yml
     stg_bootcamp__raw_haunted_houses.sql / .yml
     stg_bootcamp__raw_haunted_house_tickets.sql / .yml
   marts/
-    (add dim_* and fct_* models here)
+    dim_customers.sql / .yml                      # dimension: customer attributes
+    dim_haunted_houses.sql / .yml                 # dimension: haunted house attributes
+    fct_visits.sql / .yml                         # fact: tickets joined with feedbacks
 ```
 
-Everything under `staging/` was generated with `dbt run-operation` — no manual SQL.
+Everything under `staging/` was generated with `dbt run-operation` — no manual SQL. Marts were written on top of staging to complete the lineage, then their YAML was also generated via codegen.
 
 ## Prerequisites
 
@@ -65,7 +67,7 @@ dbt --quiet run-operation generate_base_model \
   --args '{
     "source_name": "bootcamp",
     "table_name": "raw_customers",
-    "materialized": "table",
+    "materialized": "view",
     "leading_commas": true
   }' > models/staging/stg_bootcamp__raw_customers.sql
 ```
@@ -74,7 +76,7 @@ Repeat for each table (or automate with a loop / Claude Code).
 
 ### Step 3: Materialize staging models
 
-Run the staging models so codegen can introspect them for YAML generation:
+Run the staging views so codegen can introspect them for YAML generation:
 
 ```bash
 dbt run --select staging
@@ -90,24 +92,22 @@ dbt --quiet run-operation generate_model_yaml \
   > models/staging/stg_bootcamp__raw_customers.yml
 ```
 
-### Step 5: Build marts (dim/fct) on top
+### Step 5: Build marts (dim/fct)
 
-Write your dimensional models in `models/marts/` referencing the staging layer:
+Write dimensional models in `models/marts/` referencing the staging layer. Marts complete the lineage — they're where business logic lives:
 
-```sql
--- models/marts/dim_customers.sql
-select
-    customer_id
-    , age
-    , gender
-    , email
-from {{ ref('stg_bootcamp__raw_customers') }}
-```
-
-Then generate YAML for marts the same way:
+- **dim_** models wrap a single entity (customers, haunted houses)
+- **fct_** models join staging tables to represent events (visits = tickets + feedbacks)
 
 ```bash
 dbt run --select marts
+```
+
+### Step 6: Generate marts YAML
+
+Same codegen command, pointed at the mart models:
+
+```bash
 dbt --quiet run-operation generate_model_yaml \
   --args '{"model_names": ["dim_customers"]}' \
   > models/marts/dim_customers.yml
